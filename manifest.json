@@ -3,7 +3,7 @@
 		"scripts": [ "background.js" ]
 	},
     "manifest_version": 2,
-	"version": "2.1",
+	"version": "2.2",
     "name": "DisChrome", 
     "description": "A chrome/discord webhook bridge, allowing for easy shitposting",
     "page_action": {
