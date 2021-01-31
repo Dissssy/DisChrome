@@ -102,11 +102,13 @@ getValue(function (value){
 			var pressed = $(this).attr('id');
 			if(pressed == "ADDFORM"){
 				createForm("", "", "", "");
+				i++;
 				idcount = idcount + 1;
 			}
 			if(pressed == "SUBTRACTFORM"){
 				if(document.getElementsByTagName("form").length > 0){
 					document.getElementsByTagName("form")[document.getElementsByTagName("form").length - 1].remove();
+					i--;
 					idcount = idcount - 1;
 				}else{
 					alert("NOTHING TO REMOVE");
@@ -122,7 +124,7 @@ getValue(function (value){
 					Form[i].pfp = $('#pfp' + i).val();
 				};
 				chrome.storage.sync.set({'SAVEDATA': JSON.stringify(Form)}, function(){
-					//alert("settings saved")
+					//alert(JSON.stringify(Form) + "settings saved")
 					chrome.runtime.reload(); 
 				});
 			};
