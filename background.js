@@ -37,6 +37,7 @@ getValue(function (value) {
 	for(i = 1; i < idcount + 1; i++){
 		var url = USERDATA[i].url;
 		var name = USERDATA[i].name;
+		var msg = USERDATA[i].msg;
 		//name is optional, handle if that field is empty by removing "to"
 		if(name != ""){
 			var id = "Post to " + USERDATA[i].id;
@@ -45,18 +46,32 @@ getValue(function (value) {
 		};
 		//create context menu item if this id has a url
 		if(url != ""){
-			chrome.contextMenus.create({"id": "" + i, "title": id, "contexts": ["image", "link", "selection", "video", "audio"]});
+			chrome.contextMenus.create({"id": "" + ((i * 2) - 1), "title": id, "contexts": ["image", "link", "selection", "video", "audio"]});
+			if(msg){
+				chrome.contextMenus.create({"id": "" + (i * 2), "title": id + " with message", "contexts": ["all"]});
+			};
 		};
 	};
 	//add listener for the context menu items
 	chrome.contextMenus.onClicked.addListener(function(clickData){
 		//get all of the click data (for readability)
-		clicked = clickData.menuItemId
+		clicked = clickData.menuItemId;
+		if(clicked % 2 == 1){
+			sendmessage = false;
+			clicked = Math.floor((clicked / 2) + 1);
+		}else{
+			sendmessage = true;
+			clicked = Math.floor(clicked / 2);
+		}
 		var clickedurl = USERDATA[clicked].url;
 		var clickedname = USERDATA[clicked].name;
 		var clickedpfp = USERDATA[clicked].pfp;
 		//create and fill string to post
 		stringtopost = "";
+		messagetopost = "";
+		if(sendmessage == true){
+			messagetopost = prompt("input message here");
+		}
 		if(clickData.hasOwnProperty('srcUrl')){
 			stringtopost = stringtopost + " " + clickData.srcUrl
 		}else if(clickData.hasOwnProperty('linkUrl')){
@@ -64,6 +79,15 @@ getValue(function (value) {
 		}else if(clickData.hasOwnProperty('selectionText')){
 			stringtopost = stringtopost + " " + clickData.selectionText
 		};
+		if (sendmessage = true){
+			//check if message to post is below 2k characters (discord hard limit) if it is below that, call post helper function to post content
+			if (messagetopost.length <= 2000) {
+				postit(clickedurl, messagetopost, clickedname, clickedpfp);
+			}else{
+				//if message is too long, alert user that it is too long and dont post
+				alert(messagetopost.length + " characters is too long, discord only allows 2000 maximum");
+			}
+		}
 		//check if string to post is below 2k characters (discord hard limit) if it is below that, call post helper function to post content
 		if (stringtopost.length <= 2000) {
 			postit(clickedurl, stringtopost, clickedname, clickedpfp);

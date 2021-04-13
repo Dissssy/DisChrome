@@ -4,7 +4,7 @@ function getValue(callback) {
 }
 
 //helper function to create generic form objects
-function createForm(defaulturl, defaultid, defaultname, defaultpfp){	
+function createForm(defaulturl, defaultid, defaultname, defaultpfp, defaultmsg){	
 	//create form
 	var form = document.createElement("form");
 	form.setAttribute("id", i);
@@ -45,11 +45,19 @@ function createForm(defaulturl, defaultid, defaultname, defaultpfp){
 	pfpinput.setAttribute("name", "pfp");
 	pfpinput.setAttribute("value", defaultpfp);
 	
+	//create toggle input
+	var msgtoggle = document.createElement("input");
+	msgtoggle.setAttribute("type", "checkbox");
+	msgtoggle.setAttribute("id", "msg" + i);
+	msgtoggle.setAttribute("name", "msg");
+	msgtoggle.checked = defaultmsg;
+	
 	//append everything
 	form.appendChild(urlinput);
 	form.appendChild(idinput);
 	form.appendChild(nameinput);
 	form.appendChild(pfpinput);
+	form.appendChild(msgtoggle);
 	document.getElementsByTagName("body")[0].getElementsByTagName("div")[0].appendChild(form);
 }
 
@@ -100,15 +108,22 @@ getValue(function (value){
 			}else{
 				defaultpfp = ""
 			}
+			//check if current form has msg property
+			if(USERDATA[i].hasOwnProperty("msg")){
+				defaultmsg = USERDATA[i].msg;
+			}else{
+				defaultmsg = false;
+			}
 		}else{
 			//if this form id doesnt exist just set the values to blank
-			defaulturl = ""
-			defaultid = ""
-			defaultname = ""
-			defaultpfp = ""
+			defaulturl = "";
+			defaultid = "";
+			defaultname = "";
+			defaultpfp = "";
+			defaultmsg = false;
 		}
 		//call create form helper with default values
-		createForm(defaulturl, defaultid, defaultname, defaultpfp);
+		createForm(defaulturl, defaultid, defaultname, defaultpfp, defaultmsg);
 	}
 	
 	//form handler
@@ -122,7 +137,28 @@ getValue(function (value){
 				createForm("", "", "", "");
 				i++;
 				idcount = idcount + 1;
-			}
+			};
+			//import button pressed, get json from user and set values
+			if(pressed == "IMPORTSETTINGS"){
+				if(confirm("importing will overwrite previous save data")){
+					if(confirm("im serious, if you mess this up you'll have to set everything up again")){
+						loadeddata = prompt("paste your backup string here");
+						try{
+							JSON.parse(loadeddata);
+							chrome.storage.sync.set({'SAVEDATA': loadeddata}, function(){
+								alert("backup loaded")
+								chrome.runtime.reload(); 
+							});
+						}catch{
+							alert("not valid json");
+						};
+					};
+				};
+			};
+			//export button pressed, send json to user
+			if(pressed == "EXPORTSETTINGS"){
+				prompt("copy this and save it somewhere", value.SAVEDATA);
+			};
 			//subtract button is pressed, delete last form in list, decrement different form handler values, or alert that there are no more forms to remove
 			if(pressed == "SUBTRACTFORM"){
 				if(document.getElementsByTagName("form").length > 0){
@@ -144,6 +180,7 @@ getValue(function (value){
 					Form[i].id = $('#id' + i).val();
 					Form[i].name = $('#name' + i).val();
 					Form[i].pfp = $('#pfp' + i).val();
+					Form[i].msg = $('#msg' + i).is(":checked");
 				};
 				//turn Form object into a json string, save that to the SAVEDATA value in chrome storage, alert user that the settings have been saved, reload extension
 				chrome.storage.sync.set({'SAVEDATA': JSON.stringify(Form)}, function(){
